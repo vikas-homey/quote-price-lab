@@ -1,0 +1,855 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quote Price Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Homey tokens (app/assets/tailwind/application.css) */
+:root {
+  --primary-50: #F5F3FF;
+  --primary-100: #EDE9FE;
+  --primary-200: #DDD6FE;
+  --primary-500: #8B5CF6;
+  --primary-600: #7C3AED;
+  --primary-700: #6D28D9;
+  --neutral-50: #f8fafc;
+  --neutral-100: #f1f5f9;
+  --neutral-200: #e2e8f0;
+  --neutral-300: #cbd5e1;
+  --neutral-400: #94a3b8;
+  --neutral-500: #64748b;
+  --neutral-600: #475569;
+  --neutral-700: #334155;
+  --neutral-900: #0f172a;
+  --green-50: #ECFDF5;
+  --green-600: #059669;
+  --shadow: 0 1px 2px rgba(15, 23, 42, .05);
+  --shadow-lift: 0 10px 30px -12px rgba(124, 58, 237, .30), 0 1px 2px rgba(15, 23, 42, .05);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--neutral-50);
+  color: var(--neutral-900);
+  font: 14px/1.45 "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-feature-settings: "cv11", "tnum";
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+.num { font-variant-numeric: tabular-nums; }
+.app { max-width: 1440px; margin: 0 auto; padding: 20px 24px 48px; display: flex; flex-direction: column; gap: 16px; }
+
+/* Top bar */
+.top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 12px; margin-right: auto; }
+.mark { width: 36px; height: 36px; border-radius: 10px; background: var(--primary-600); display: grid; place-items: center; }
+.mark svg { width: 14px; color: #fff; }
+.brand h1 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
+.brand p { margin: 0; font-size: 13px; color: var(--neutral-500); }
+.top-actions { display: flex; gap: 8px; }
+.btn { border: 1px solid var(--neutral-200); background: #fff; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 500; color: var(--neutral-700); display: inline-flex; gap: 6px; align-items: center; transition: transform .15s, border-color .2s, color .2s; box-shadow: var(--shadow); }
+.btn:hover { border-color: var(--primary-600); color: var(--primary-600); }
+.btn:active { transform: scale(.97); }
+.btn svg { width: 15px; height: 15px; }
+
+.panel { background: #fff; border: 1px solid var(--neutral-200); border-radius: 12px; box-shadow: var(--shadow); }
+.panel-title { font-size: 15px; font-weight: 600; margin: 0; }
+.panel-sub { font-size: 13px; color: var(--neutral-500); margin: 2px 0 0; }
+
+/* Case bar */
+.case { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end; padding: 16px 18px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.lbl { font-size: 13px; color: var(--neutral-600); font-weight: 500; }
+.money-in { display: inline-flex; align-items: center; border: 1px solid var(--neutral-300); background: #fff; border-radius: 8px; padding: 0 10px; height: 36px; transition: border-color .2s, box-shadow .2s; }
+.money-in:focus-within { border-color: var(--primary-600); box-shadow: 0 0 0 3px var(--primary-100); }
+.money-in span { color: var(--neutral-400); }
+.money-in input { border: 0; background: transparent; outline: none; width: 70px; text-align: right; padding: 0; font-variant-numeric: tabular-nums; }
+.money-in.wide input { width: 92px; }
+.money-in.narrow input { width: 40px; }
+select.sel { border: 1px solid var(--neutral-300); background: #fff; border-radius: 8px; height: 36px; padding: 0 32px 0 10px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 16px; min-width: 250px; }
+select.sel:focus { outline: none; border-color: var(--primary-600); box-shadow: 0 0 0 3px var(--primary-100); }
+.divider { width: 1px; align-self: stretch; background: var(--neutral-200); }
+
+.stepper { display: inline-flex; align-items: center; border: 1px solid var(--neutral-300); border-radius: 8px; height: 36px; }
+.stepper button { width: 32px; height: 100%; border: 0; background: transparent; font-size: 16px; color: var(--neutral-500); }
+.stepper button:hover { color: var(--primary-600); }
+.stepper span { min-width: 20px; text-align: center; font-weight: 500; }
+
+.seg { display: inline-flex; background: var(--neutral-100); border-radius: 8px; padding: 3px; position: relative; height: 36px; }
+.seg button { border: 0; background: transparent; padding: 0 12px; font-size: 13px; border-radius: 6px; color: var(--neutral-500); position: relative; z-index: 1; transition: color .2s; white-space: nowrap; }
+.seg button.on { color: var(--neutral-900); font-weight: 500; }
+.seg .pill { position: absolute; top: 3px; bottom: 3px; left: 0; width: 0; border-radius: 6px; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.12); transition: transform .35s cubic-bezier(.2,.9,.2,1.15), width .35s cubic-bezier(.2,.9,.2,1.15); }
+
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 22px; background: transparent; margin: 0; --p: 0%; }
+input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: linear-gradient(90deg, var(--primary-600) var(--p), var(--neutral-200) var(--p)); }
+input[type=range]::-moz-range-track { height: 6px; border-radius: 999px; background: linear-gradient(90deg, var(--primary-600) var(--p), var(--neutral-200) var(--p)); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid var(--primary-600); margin-top: -6px; box-shadow: 0 2px 6px -1px rgba(124,58,237,.4); transition: transform .15s cubic-bezier(.2,.8,.2,1.4); }
+input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 2px solid var(--primary-600); }
+input[type=range]:active::-webkit-slider-thumb { transform: scale(1.25); }
+input[type=range]:focus-visible { outline: none; }
+input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--primary-100); }
+input[type=range]:disabled { opacity: .45; }
+
+/* Workspace: firms + disbursements left, price order right */
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 16px; align-items: start; }
+.work-main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.order { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+/* Price order */
+.ladder { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.hero { border-radius: 12px; padding: 16px; color: #fff; background: linear-gradient(135deg, var(--primary-600), var(--primary-700) 60%, #4C1D95); position: relative; overflow: hidden; }
+.hero::after { content: ""; position: absolute; right: -40px; top: -40px; width: 140px; height: 140px; border-radius: 50%; background: rgba(255,255,255,.08); }
+.hero .h-kicker { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--primary-200); }
+.hero .h-firm { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-weight: 600; font-size: 15px; }
+.hero .h-firm .fletter { background: #fff; color: var(--primary-700); }
+.hero .h-total { font-size: 30px; font-weight: 700; letter-spacing: -.03em; margin-top: 6px; line-height: 1.1; }
+.hero .h-total .p { font-size: 16px; color: var(--primary-200); font-weight: 600; letter-spacing: 0; }
+.tiers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.tiers li { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; }
+.tiers .t-rank { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 600; background: var(--neutral-100); color: var(--neutral-600); }
+.tiers li.best .t-rank { background: var(--primary-600); color: #fff; }
+.tiers .t-name { font-weight: 500; font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tiers .t-total { font-weight: 600; font-size: 14px; text-align: right; }
+.tiers .t-bar { grid-column: 2 / 3; height: 6px; border-radius: 999px; background: var(--neutral-100); overflow: hidden; }
+.tiers .t-bar i { display: block; height: 100%; border-radius: 999px; background: var(--primary-200); }
+.tiers li.best .t-bar i { background: var(--primary-600); }
+.tiers .t-gap { font-size: 12px; color: var(--neutral-500); text-align: right; }
+.tiers li.best .t-gap { color: var(--primary-700); font-weight: 600; }
+.spread { display: flex; justify-content: space-between; align-items: baseline; padding-top: 12px; border-top: 1px solid var(--neutral-100); font-size: 13px; color: var(--neutral-500); }
+.spread b { color: var(--neutral-900); font-size: 15px; font-weight: 600; }
+.refctl { display: flex; gap: 8px; align-items: center; }
+.firm .f-ref { display: none; }
+body.ref-each .firm .f-ref { display: flex; }
+body.ref-each #refAllWrap { display: none; }
+
+/* Law firms */
+.firms { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+.firm { background: #fff; border: 1px solid var(--neutral-200); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px; position: relative; transition: border-color .3s, box-shadow .3s; animation: enter .45s cubic-bezier(.2,.9,.2,1) backwards; min-width: 0; }
+.firm.cheapest { border-color: var(--primary-600); box-shadow: 0 0 0 3px var(--primary-100); }
+@keyframes enter { from { opacity: 0; transform: translateY(12px) scale(.98); } }
+.firm.ping::after { content: ""; position: absolute; inset: -1px; border-radius: 12px; border: 2px solid var(--primary-600); animation: ping .7s cubic-bezier(.2,.8,.2,1) forwards; pointer-events: none; }
+@keyframes ping { from { opacity: .7; } to { opacity: 0; transform: scale(1.03); } }
+.fhead { display: flex; align-items: center; gap: 8px; }
+.fletter { width: 28px; height: 28px; border-radius: 50%; background: var(--primary-600); color: #fff; font-size: 12px; font-weight: 600; display: grid; place-items: center; flex: none; }
+.fname { flex: 1; min-width: 0; border: 1px solid transparent; border-radius: 6px; padding: 3px 6px; font-weight: 600; font-size: 14px; background: transparent; outline: none; transition: border-color .2s, background .2s; }
+.fname:hover { background: var(--neutral-50); }
+.fname::placeholder { color: var(--neutral-900); opacity: 1; }
+.fname:focus { border-color: var(--primary-600); background: #fff; }
+.x { border: 0; background: transparent; color: var(--neutral-400); width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; flex: none; }
+.x:hover { color: var(--neutral-900); background: var(--neutral-100); }
+.x:disabled { visibility: hidden; }
+.x svg { width: 14px; height: 14px; }
+.fee-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ftotal { font-size: 28px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; }
+.ftotal .p { font-size: 16px; color: var(--neutral-400); font-weight: 600; letter-spacing: 0; }
+.rank { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; min-height: 22px; }
+.chip { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--neutral-100); color: var(--neutral-600); }
+.chip.best { background: var(--primary-600); color: #fff; }
+.gap { font-size: 12px; color: var(--neutral-500); }
+.lines { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; font-size: 13px; padding-top: 12px; border-top: 1px solid var(--neutral-100); }
+.lines dt { color: var(--neutral-500); }
+.lines dd { margin: 0; text-align: right; font-weight: 500; }
+.lines .hide { display: none; }
+.ffoot { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: var(--neutral-500); padding-top: 4px; }
+.link { border: 0; background: transparent; padding: 0; color: var(--primary-600); font-weight: 500; font-size: 12px; }
+.link:hover { text-decoration: underline; }
+.add-firm { border: 1.5px dashed var(--neutral-300); border-radius: 12px; background: transparent; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--neutral-500); font-weight: 500; transition: border-color .2s, color .2s, background .2s; }
+.add-firm:hover { border-color: var(--primary-600); color: var(--primary-600); background: var(--primary-50); }
+.add-firm span { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid currentColor; display: grid; place-items: center; font-size: 20px; line-height: 1; }
+
+/* Disbursements */
+.disb { padding: 16px 18px 18px; }
+.disb-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 14px; border-bottom: 1px solid var(--neutral-200); }
+.tab { border: 0; background: transparent; padding: 8px 12px; font-size: 13px; font-weight: 500; color: var(--neutral-500); border-bottom: 2px solid transparent; margin-bottom: -1px; display: inline-flex; gap: 6px; align-items: center; transition: color .2s, border-color .2s; }
+.tab:hover { color: var(--neutral-900); }
+.tab.on { color: var(--primary-700); border-bottom-color: var(--primary-600); }
+.tab .own { font-size: 11px; font-weight: 600; background: var(--primary-100); color: var(--primary-700); border-radius: 999px; padding: 0 6px; }
+.scope { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px; margin: 14px 0 4px; background: var(--neutral-50); border-radius: 10px; font-size: 13px; color: var(--neutral-600); }
+.switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; color: var(--neutral-900); }
+.switch input { appearance: none; width: 36px; height: 20px; border-radius: 999px; background: var(--neutral-300); position: relative; margin: 0; cursor: pointer; transition: background .25s; }
+.switch input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform .25s cubic-bezier(.2,.9,.2,1.3); }
+.switch input:checked { background: var(--primary-600); }
+.switch input:checked::after { transform: translateX(16px); }
+.switch input:focus-visible { outline: 2px solid var(--primary-600); outline-offset: 2px; }
+.dtable { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 4px; }
+.dtable th { text-align: left; font-size: 12px; font-weight: 500; color: var(--neutral-500); padding: 10px 12px 8px 0; border-bottom: 1px solid var(--neutral-200); white-space: nowrap; }
+.dtable td { padding: 8px 12px 8px 0; border-bottom: 1px solid var(--neutral-100); vertical-align: middle; }
+.dtable th.r, .dtable td.r { text-align: right; }
+.dtable td.name { font-weight: 500; }
+.dtable th.pick, .dtable td.pick { width: 36px; padding-right: 4px; }
+.dtable .docs-in { width: 38px; height: 26px; border: 1px solid var(--neutral-300); border-radius: 6px; text-align: center; font-size: 12px; margin: 0 2px; padding: 0; color: var(--neutral-900); font-variant-numeric: tabular-nums; }
+.dtable .docs-in:focus { outline: none; border-color: var(--primary-600); box-shadow: 0 0 0 3px var(--primary-100); }
+.dtable td.pick input { width: 18px; height: 18px; accent-color: var(--primary-600); cursor: pointer; margin: 0; vertical-align: middle; }
+.dtable tr.off td { color: var(--neutral-400); }
+.dtable tr.off .money-in { opacity: .5; }
+.picks { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 14px 0 0; font-size: 13px; color: var(--neutral-600); }
+.picks b { color: var(--neutral-900); }
+.dtable td.name small { font-size: 12px; color: var(--neutral-400); font-weight: 400; margin-left: 4px; }
+.dtable td.muted { color: var(--neutral-500); }
+.dtable td.price { width: 130px; }
+.dtable .money-in { height: 32px; }
+.dtable tr.sub td { padding-top: 18px; font-size: 12px; font-weight: 600; color: var(--neutral-500); border-bottom: 1px solid var(--neutral-200); }
+.dtable tr.na td { color: var(--neutral-400); }
+.dtable tr.na .money-in { opacity: .55; }
+.dtable .fixed { color: var(--neutral-500); font-size: 13px; }
+@media (max-width: 640px) { .dtable .unit { display: none; } .dtable td.price { width: 110px; } .dtable .money-in input { width: 52px; } }
+.locked .money-in { background: var(--neutral-50); }
+
+/* Drawer */
+.scrim { position: fixed; inset: 0; background: rgba(15, 23, 42, .3); opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 40; }
+.scrim.open { opacity: 1; pointer-events: auto; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(460px, 100vw); background: #fff; border-left: 1px solid var(--neutral-200); box-shadow: -20px 0 60px -20px rgba(15,23,42,.3); z-index: 41; transform: translateX(105%); transition: transform .45s cubic-bezier(.2,.9,.15,1); display: flex; flex-direction: column; visibility: hidden; }
+.drawer.open { transform: none; visibility: visible; }
+.dhead { padding: 20px 22px 16px; border-bottom: 1px solid var(--neutral-200); display: flex; gap: 12px; align-items: flex-start; }
+.dhead h2 { margin: 0; font-size: 17px; font-weight: 600; }
+.dhead p { margin: 2px 0 0; font-size: 13px; color: var(--neutral-500); }
+.dhead .btn { margin-left: auto; flex: none; width: 34px; height: 34px; padding: 0; justify-content: center; }
+.dscroll { overflow: auto; padding: 4px 22px 24px; flex: 1; }
+.dscroll h3 { font-size: 13px; font-weight: 600; margin: 20px 0 4px; }
+.btable { width: 100%; border-collapse: collapse; font-size: 13px; }
+.btable td { padding: 7px 0; border-top: 1px solid var(--neutral-100); text-align: right; white-space: nowrap; }
+.btable td:first-child { text-align: left; white-space: normal; color: var(--neutral-700); padding-right: 12px; }
+.btable tr.grp td { border-top: 0; padding-top: 14px; font-size: 12px; font-weight: 600; color: var(--neutral-500); }
+.btable tr.tot td { font-weight: 600; border-top: 1px solid var(--neutral-300); color: var(--neutral-900); }
+.btable tr { animation: rowin .35s cubic-bezier(.2,.9,.2,1) backwards; }
+@keyframes rowin { from { opacity: 0; transform: translateX(8px); } }
+
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 20px); background: var(--neutral-900); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px; opacity: 0; transition: all .35s cubic-bezier(.2,.9,.2,1.2); z-index: 60; pointer-events: none; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.foot { font-size: 12px; color: var(--neutral-400); max-width: 90ch; margin: 0; }
+
+@media (max-width: 1100px) {
+  .workspace { grid-template-columns: 1fr; }
+  .order { position: static; order: -1; }
+}
+@media (max-width: 760px) {
+  .app { padding: 16px 16px 40px; }
+  select.sel { min-width: 0; width: 100%; }
+  .case .field:first-child { width: 100%; }
+  .rows { grid-template-columns: 1fr; }
+  .top-actions .btn .txt { display: none; }
+  .top-actions .btn { width: 34px; height: 34px; padding: 0; justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="mark"><svg viewBox="0 0 400 621" fill="currentColor" aria-hidden="true"><path d="M395.309 330.652c-3.104-16.311-8.409-30.999-15.915-44.063-7.507-13.028-18.116-22.916-31.83-29.592-13.749-6.713-30.53-10.033-50.379-10.033-27.679 0-52.4 7.94-74.089 23.782-16.853 12.306-31.36 30.062-43.305 47.095L261.674.591 0 441.695l97.04 14.255L0 620.151h170.155V424.553c0-26.308 5.955-47.816 17.828-64.489 11.873-16.673 26.597-25.009 44.135-25.009 17.539 0 29.52 5.774 36.702 17.286 7.145 11.512 10.718 30.783 10.718 57.813v210.033H400V388.646c0-22.303-1.552-41.646-4.655-57.958l-.036-.036z"/></svg></div>
+      <div>
+        <h1>Quote Price Lab</h1>
+        <p>Your law firms' quotes, side by side</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn" id="share" title="Copy a link to this setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span class="txt">Copy link</span></button>
+      <button class="btn" id="reset" title="Start again"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span class="txt">Reset</span></button>
+    </div>
+  </header>
+
+  <section class="panel case">
+    <div class="field"><label class="lbl" for="type">Quote</label><select class="sel" id="type"></select></div>
+    <div class="field"><span class="lbl">Clients</span><span class="stepper"><button data-step="-1" aria-label="Fewer clients">−</button><span class="num" id="clients">1</span><button data-step="1" aria-label="More clients">+</button></span></div>
+    <div class="field"><span class="lbl">Prices</span><span class="seg" id="vatSeg"><span class="pill"></span><button data-v="ex">Ex VAT</button><button data-v="inc">Inc VAT</button></span></div>
+    <div class="field"><span class="lbl">Referral fee</span><span class="refctl"><span class="seg" id="refSeg"><span class="pill"></span><button data-v="all">Same for all</button><button data-v="each">Per law firm</button></span><span class="money-in" id="refAllWrap"><span>£</span><input id="refAllIn" inputmode="decimal" aria-label="Referral fee for every law firm"></span></span></div>
+  </section>
+
+  <div class="workspace">
+  <div class="work-main">
+  <div class="firms" id="firms"></div>
+
+  <section class="panel disb">
+    <div class="disb-head">
+      <div>
+        <h2 class="panel-title">Disbursements</h2>
+        <p class="panel-sub">Per unit, ex VAT. Each price starts at cost.</p>
+      </div>
+    </div>
+    <div class="tabs" id="tabs" role="tablist"></div>
+    <div class="scope" id="scope"></div>
+    <div class="picks" id="picks"></div>
+    <table class="dtable num"><thead><tr><th class="pick"><span class="sr-only" style="position:absolute;left:-9999px">On quote</span></th><th>Disbursement</th><th class="r">Cost</th><th>Your price</th><th class="unit">Unit</th></tr></thead><tbody id="rows"></tbody></table>
+  </section>
+  </div>
+
+  <aside class="order">
+    <section class="panel ladder" aria-labelledby="orderTitle">
+      <div>
+        <h2 class="panel-title" id="orderTitle">Price order</h2>
+        <p class="panel-sub" id="ladderSub"></p>
+      </div>
+      <div class="hero num" id="hero"></div>
+      <ol class="tiers num" id="tiers"></ol>
+      <div class="spread num" id="spread"></div>
+    </section>
+  </aside>
+  </div>
+
+  <p class="foot">Disbursement prices start at cost. The HMLR registration fee is a flat £95 on every purchase. ID checks and bankruptcy searches are charged for every client; each matter includes one client, and the £50 additional owner fee applies to every client after the first.</p>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true" role="dialog" aria-labelledby="dTitle">
+  <div class="dhead">
+    <div><h2 id="dTitle"></h2><p id="dSub"></p></div>
+    <button class="btn" id="dClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="dscroll" id="dBody"></div>
+</aside>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+  const VAT = 0.2
+  const MAX_FIRMS = 6
+  const LETTERS = 'ABCDEF'
+
+  // `min` is the minimum price per unit (the floor). `qty` per side: a number,
+  // 'clients' (per client / per name) or 'units' (units per case).
+  const ITEMS = [
+    { key: 'search', name: 'Searches, full pack', unit: 'per case', min: 250, vat: .2, qty: { S: 0, P: 1 } },
+    { key: 'coal', name: 'Coal mining search', unit: 'per case', min: 65, vat: .2, qty: { S: 0, P: 1 } },
+    { key: 'oce', name: 'Land Registry official copies', unit: 'per title', min: 9, vat: 0, qty: { S: 1, P: 1 } },
+    { key: 'os1', name: 'OS1 official search with priority', unit: 'per case', min: 8.8, vat: 0, qty: { S: 0, P: 1 } },
+    { key: 'sim', name: 'Search of the index map', unit: 'per case', min: 8.8, vat: 0, qty: { S: 0, P: 1 } },
+    { key: 'bankruptcy', name: 'Bankruptcy search', unit: 'per name', min: 8.8, vat: 0, qty: { S: 0, P: 'clients' } },
+    { key: 'checker', name: 'Lawyer Checker', unit: 'per case', min: 25, vat: .2, qty: { S: 0, P: 1 } },
+    { key: 'id', name: 'Electronic ID / AML check', unit: 'per client', min: 25, vat: .2, qty: { S: 'clients', P: 'clients' } },
+    { key: 'tt', name: 'TT / CHAPS transfer fee', unit: 'per transfer', min: 20, vat: .2, qty: { S: 1, P: 1 } },
+    { key: 'ap1', name: 'AP1 submission', unit: 'per case', min: 25, vat: .2, qty: { S: 0, P: 1 } },
+    { key: 'hmlr', name: 'HMLR registration fee', unit: 'per case', hmlr: true, min: 95, vat: 0, qty: { S: 0, P: 1 } },
+    { key: 'sdlt', name: 'SDLT return', unit: 'per case', min: 18, vat: .2, qty: { S: 0, P: 1 } },
+    { key: 'pack', name: 'Draft contract pack', unit: 'per case', min: 15, vat: .2, qty: { S: 1, P: 0 } },
+    { key: 'enquiries', name: 'Pre-contract enquiries', unit: 'per case', min: 15, vat: .2, qty: { S: 0, P: 1 } },
+    { key: 'rot', name: 'Report on title', unit: 'per case', min: 25, vat: .2, qty: { S: 0, P: 1 } },
+    { key: 'post', name: 'Post completion', unit: 'per case', min: 35, vat: .2, qty: { S: 1, P: 1 } },
+    { key: 'esign', name: 'E-signature', unit: 'per document', min: 4, units: 5, vat: .2, qty: { S: 'units', P: 'units' } }
+  ]
+  const FEES = {
+    1: { name: 'Leasehold supplement', fee: 250 },
+    59: { name: 'Additional owner', fee: 50 }
+  }
+  const TYPES = [
+    { id: 's_fh', side: 'S', name: 'Sale, freehold', leasehold: false },
+    { id: 's_lh', side: 'S', name: 'Sale, leasehold', leasehold: true },
+    { id: 'p_fh', side: 'P', name: 'Purchase, freehold', leasehold: false },
+    { id: 'p_lh', side: 'P', name: 'Purchase, leasehold', leasehold: true }
+  ]
+
+  const minItems = () => Object.fromEntries(ITEMS.filter((it) => !it.hmlr).map((it) => [it.key, it.min]))
+  let nextId = 1
+  const newFirm = (legal, referral = 350) => ({ id: nextId++, name: '', legal, referral, items: null })
+  const standardPicks = (side) => Object.fromEntries(ITEMS.map((it) => [it.key, !!it.qty[side]]))
+  const fresh = () => {
+    nextId = 1
+    return {
+      pick: { S: standardPicks('S'), P: standardPicks('P') },
+      c: { type: 'p_fh', clients: 1, inc: true, docs: 5 },
+      shared: minItems(),
+      ref: { mode: 'all', all: 350 },
+      firms: [newFirm(1550), newFirm(1950), newFirm(3300)],
+      tab: 'all'
+    }
+  }
+  const KEY = 'quote-price-lab-v3'
+
+  // ── State ───────────────────────────────────────────────────────────────
+  const clampItems = (x) => {
+    const out = minItems()
+    ITEMS.forEach((it) => {
+      if (it.hmlr) return
+      const v = Number(x && x[it.key])
+      if (Number.isFinite(v)) out[it.key] = Math.max(it.min, v)
+    })
+    return out
+  }
+  const merge = (raw) => {
+    const base = fresh()
+    const firms = Array.isArray(raw.firms) && raw.firms.length ? raw.firms.slice(0, MAX_FIRMS) : base.firms
+    nextId = 1
+    return {
+      c: { ...base.c, ...(raw.c || {}), type: TYPES.some((t) => t.id === (raw.c && raw.c.type)) ? raw.c.type : base.c.type },
+      pick: { S: { ...standardPicks('S'), ...((raw.pick && raw.pick.S) || {}) }, P: { ...standardPicks('P'), ...((raw.pick && raw.pick.P) || {}) } },
+      shared: clampItems(raw.shared),
+      ref: { mode: raw.ref && raw.ref.mode === 'each' ? 'each' : 'all', all: Number.isFinite(Number(raw.ref && raw.ref.all)) ? Number(raw.ref.all) : 350 },
+      firms: firms.map((f) => ({ id: nextId++, name: String(f.name || ''), legal: Number(f.legal) || 0, referral: Number.isFinite(Number(f.referral)) ? Number(f.referral) : 350, items: f.items ? clampItems(f.items) : null })),
+      tab: 'all'
+    }
+  }
+  const load = () => {
+    try { if (location.hash.length > 1) return merge(JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(1)))))) } catch { /* bad link */ }
+    try { const raw = localStorage.getItem(KEY); if (raw) return merge(JSON.parse(raw)) } catch { /* storage blocked */ }
+    return fresh()
+  }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)) } catch { /* fine */ } }
+  let S = load()
+
+  const type = () => TYPES.find((t) => t.id === S.c.type) || TYPES[2]
+  const label = (f) => f.name.trim() || `Law firm ${LETTERS[S.firms.indexOf(f)]}`
+  const letter = (f) => LETTERS[S.firms.indexOf(f)]
+  const pricesFor = (f) => f.items || S.shared
+  const referralFor = (f) => Math.max(0, S.ref.mode === 'each' ? f.referral : S.ref.all)
+
+  // ── Pricing ─────────────────────────────────────────────────────────────
+  const round = (n) => Math.round(n * 100) / 100
+  const qtyOf = (it, side) => {
+    const rule = it.qty[side] || it.qty.P || it.qty.S || 1
+    return rule === 'clients' ? S.c.clients : rule === 'units' ? Math.max(0, Math.round(S.c.docs)) : rule
+  }
+  const picked = (it, side) => !!S.pick[side][it.key]
+  const splitFee = (legalFee) => {
+    const legal = Math.max(0, legalFee)
+    return { legal }
+  }
+
+  function quote(firm) {
+    const t = type()
+    const fee = splitFee(firm.legal)
+    const prices = pricesFor(firm)
+    const lines = [
+      { group: 'legal', name: 'Legal fee', net: fee.legal, vat: VAT },
+      { group: 'legal', name: 'Referral fee', net: referralFor(firm), vat: VAT }
+    ]
+    const work = (id, qty, name = FEES[id].name) => { if (qty >= 1) lines.push({ id, group: 'additional', name, qty, net: FEES[id].fee * qty, vat: VAT }) }
+    if (t.leasehold) work(1, 1)
+    work(59, S.c.clients - 1, 'Additional owners (beyond 1)')
+    ITEMS.forEach((it) => {
+      if (!picked(it, t.side)) return
+      const qty = qtyOf(it, t.side)
+      const floor = it.min
+      const unit = it.hmlr ? floor : prices[it.key]
+      lines.push({ group: 'disb', name: it.name, qty, net: round(unit * qty), min: round(floor * qty), vat: it.vat })
+    })
+    const val = (l, n = l.net) => (S.c.inc ? n * (1 + l.vat) : n)
+    const sum = (g, f = (l) => val(l)) => lines.filter((l) => l.group === g).reduce((s, l) => s + f(l), 0)
+    const net = (g, f = (l) => l.net) => lines.filter((l) => l.group === g).reduce((s, l) => s + f(l), 0)
+    const legal = sum('legal')
+    const additional = sum('additional')
+    const disb = sum('disb')
+    const total = legal + additional + disb
+    const totalNet = net('legal') + net('additional') + net('disb')
+    return {
+      lines, fee, legal, additional, disb, total, val,
+      lease: lines.filter((l) => l.id === 1).reduce((s, l) => s + val(l), 0),
+      owners: lines.filter((l) => l.id === 59).reduce((s, l) => s + val(l), 0),
+      ownersQty: Math.max(0, S.c.clients - 1),
+      legalFee: val(lines[0]), referral: val(lines[1]),
+      net: { additional: net('additional'), disb: net('disb'), vat: total - totalNet }
+    }
+  }
+
+  // ── Formatting ──────────────────────────────────────────────────────────
+  const fmt = (n, pence = 'auto') => {
+    const r = round(n)
+    const showP = pence === true || (pence === 'auto' && Math.abs(r % 1) > 0.001)
+    return '£' + Math.abs(r).toLocaleString('en-GB', { minimumFractionDigits: showP ? 2 : 0, maximumFractionDigits: showP ? 2 : 0 })
+  }
+  const bigMoney = (n) => {
+    const r = Math.max(0, round(n))
+    const whole = Math.floor(r)
+    const p = Math.round((r - whole) * 100)
+    return '£' + whole.toLocaleString('en-GB') + `<span class="p">.${String(p).padStart(2, '0')}</span>`
+  }
+  const thousands = (v) => Math.round(v).toLocaleString('en-GB')
+  const ordinal = (n) => n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th')
+  const esc = (s) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+
+  // ── Motion ──────────────────────────────────────────────────────────────
+  // Figures change in place — no count-up — so editing stays calm.
+  const reduced = true
+  const ease = (t) => 1 - Math.pow(1 - t, 4)
+  function tween(el, to, render, ms = 600) {
+    const from = el._v ?? 0
+    el._v = to
+    if (el._raf) cancelAnimationFrame(el._raf)
+    if (reduced || Math.abs(to - from) < 0.005) { el.innerHTML = render(to); return }
+    const start = performance.now()
+    const step = (now) => {
+      const k = Math.min(1, (now - start) / ms)
+      el.innerHTML = render(from + (to - from) * ease(k))
+      if (k < 1) el._raf = requestAnimationFrame(step)
+    }
+    el._raf = requestAnimationFrame(step)
+  }
+  const restart = (el, cls) => { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls) }
+
+  // ── DOM helpers ─────────────────────────────────────────────────────────
+  const $ = (sel, root = document) => root.querySelector(sel)
+  const h = (tag, attrs = {}, html = '') => {
+    const el = document.createElement(tag)
+    Object.entries(attrs).forEach(([k, v]) => (k === 'class' ? (el.className = v) : el.setAttribute(k, v)))
+    if (html) el.innerHTML = html
+    return el
+  }
+  const setFill = (range) => range.style.setProperty('--p', ((range.value - range.min) / (range.max - range.min)) * 100 + '%')
+  const parse = (s) => parseFloat(String(s).replace(/[^0-9.]/g, ''))
+  const toast = (msg) => {
+    const t = $('#toast')
+    t.textContent = msg
+    t.classList.add('show')
+    clearTimeout(t._t)
+    t._t = setTimeout(() => t.classList.remove('show'), 1800)
+  }
+  const ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+
+  // ── Case bar ────────────────────────────────────────────────────────────
+  const typeSel = $('#type')
+  TYPES.forEach((t) => typeSel.append(h('option', { value: t.id }, t.name)))
+  typeSel.addEventListener('change', () => { S.c.type = typeSel.value; renderRows(); update() })
+
+  const bindInput = (input, get, set, format = (v) => v) => {
+    input.addEventListener('input', () => {
+      const v = parse(input.value)
+      if (!Number.isFinite(v)) return
+      set(v)
+      update()
+    })
+    input.addEventListener('blur', () => { input.value = format(get()) })
+  }
+  document.querySelectorAll('.stepper button').forEach((b) => b.addEventListener('click', () => {
+    S.c.clients = Math.max(1, Math.min(6, S.c.clients + parseInt(b.dataset.step, 10)))
+    $('#clients').textContent = S.c.clients
+    update()
+  }))
+  const vatSeg = $('#vatSeg')
+  const placeVat = () => {
+    const v = S.c.inc ? 'inc' : 'ex'
+    vatSeg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === v))
+    const on = vatSeg.querySelector('button.on')
+    const pill = vatSeg.querySelector('.pill')
+    if (on.offsetWidth) { pill.style.width = on.offsetWidth + 'px'; pill.style.transform = `translateX(${on.offsetLeft - 3}px)`; pill.style.left = '3px' }
+  }
+  vatSeg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { S.c.inc = b.dataset.v === 'inc'; placeVat(); update() }))
+  const refSeg = $('#refSeg')
+  const placeRef = () => {
+    document.body.classList.toggle('ref-each', S.ref.mode === 'each')
+    refSeg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.ref.mode))
+    const on = refSeg.querySelector('button.on')
+    const pill = refSeg.querySelector('.pill')
+    if (on.offsetWidth) { pill.style.width = on.offsetWidth + 'px'; pill.style.transform = `translateX(${on.offsetLeft - 3}px)`; pill.style.left = '3px' }
+  }
+  refSeg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    if (S.ref.mode !== b.dataset.v && b.dataset.v === 'each') S.firms.forEach((f) => { f.referral = S.ref.all; const r = firmRefs.get(f.id); if (r) r.refIn.value = f.referral })
+    S.ref.mode = b.dataset.v
+    placeRef(); update()
+  }))
+  bindInput($('#refAllIn'), () => S.ref.all, (v) => (S.ref.all = v))
+
+  // ── Law firm columns ────────────────────────────────────────────────────
+  const firmsEl = $('#firms')
+  let firmRefs = new Map()
+  function renderFirms() {
+    firmsEl.replaceChildren()
+    firmRefs = new Map()
+    S.firms.forEach((f) => {
+      const el = h('article', { class: 'firm' })
+      el.innerHTML = `
+        <div class="fhead">
+          <span class="fletter">${letter(f)}</span>
+          <input class="fname" value="${esc(f.name)}" placeholder="Law firm ${letter(f)}" aria-label="Law firm name">
+          <button class="x" title="Remove this law firm" aria-label="Remove this law firm" ${S.firms.length <= 1 ? 'disabled' : ''}>${ICON_X}</button>
+        </div>
+        <div>
+          <div class="fee-row"><span class="lbl">Legal fee</span><span class="money-in"><span>£</span><input class="legal-in" inputmode="decimal" aria-label="Legal fee"></span></div>
+          <div class="fee-row f-ref" style="margin-top:8px"><span class="lbl">Referral fee</span><span class="money-in"><span>£</span><input class="ref-in" inputmode="decimal" aria-label="Referral fee"></span></div>
+        </div>
+        <div>
+          <div class="ftotal num"></div>
+          <div class="rank"><span class="chip"></span><span class="gap num"></span></div>
+        </div>
+        <dl class="lines num">
+          <dt>Legal fee</dt><dd class="c-legal"></dd>
+          <dt class="w-ref">Referral fee</dt><dd class="w-ref c-ref"></dd>
+          <dt class="w-lh">Leasehold supplement</dt><dd class="w-lh c-lh"></dd>
+          <dt class="w-ao c-aol">Additional owners</dt><dd class="w-ao c-ao"></dd>
+          <dt>Disbursements</dt><dd class="c-disb"></dd>
+        </dl>
+        <div class="ffoot"><button class="link c-prices"></button><button class="link c-open">Breakdown</button></div>`
+      const name = $('.fname', el)
+      name.addEventListener('input', () => { f.name = name.value; renderTabs(); renderScope(); update() })
+      $('.x', el).addEventListener('click', () => {
+        S.firms = S.firms.filter((x) => x !== f)
+        if (S.tab === f.id) S.tab = 'all'
+        renderAll()
+      })
+      const input = $('.legal-in', el)
+      input.value = f.legal
+      input.addEventListener('input', () => {
+        const v = parse(input.value)
+        if (!Number.isFinite(v)) return
+        f.legal = v
+        update()
+      })
+      input.addEventListener('blur', () => { input.value = f.legal })
+      const refIn = $('.ref-in', el)
+      refIn.value = f.referral
+      refIn.addEventListener('input', () => { const v = parse(refIn.value); if (Number.isFinite(v)) { f.referral = v; update() } })
+      refIn.addEventListener('blur', () => { refIn.value = f.referral })
+      $('.c-prices', el).addEventListener('click', () => {
+        S.tab = f.id
+        renderTabs(); renderScope(); renderRows()
+        $('.disb').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' })
+      })
+      $('.c-open', el).addEventListener('click', () => openDrawer(f))
+      firmsEl.append(el)
+      firmRefs.set(f.id, {
+        el, total: $('.ftotal', el), chip: $('.chip', el), gap: $('.gap', el),
+        legal: $('.c-legal', el), ref: $('.c-ref', el), refRow: el.querySelectorAll('.w-ref'), refIn, lh: $('.c-lh', el), ao: $('.c-ao', el), aol: $('.c-aol', el), disb: $('.c-disb', el),
+        lhRow: el.querySelectorAll('.w-lh'), aoRow: el.querySelectorAll('.w-ao'), prices: $('.c-prices', el), last: null
+      })
+    })
+    if (S.firms.length < MAX_FIRMS) {
+      const add = h('button', { class: 'add-firm' }, `<span>+</span>Add a law firm<small style="font-weight:400;color:var(--neutral-400)">${S.firms.length} of ${MAX_FIRMS}</small>`)
+      add.addEventListener('click', () => {
+        const last = S.firms[S.firms.length - 1]
+        S.firms.push(newFirm(last ? last.legal + 250 : 2000, last ? last.referral : S.ref.all))
+        renderAll()
+      })
+      firmsEl.append(add)
+    }
+  }
+
+  // ── Price order (still: nothing moves, so it reads while editing) ──
+  function renderLadder(results) {
+    const order = [...results].sort((a, b) => a.q.total - b.q.total)
+    const lo = order[0].q.total
+    const hi = order[order.length - 1].q.total
+    const best = order[0]
+    $('#ladderSub').textContent = `${type().name} · ${S.c.clients} client${S.c.clients > 1 ? 's' : ''} · ${S.c.inc ? 'inc' : 'ex'} VAT`
+    $('#hero').innerHTML = `<div class="h-kicker">${order.length > 1 ? 'Cheapest' : 'Your law firm'}</div>
+      <div class="h-firm"><span class="fletter">${letter(best.f)}</span>${esc(label(best.f))}</div>
+      <div class="h-total">${bigMoney(best.q.total)}</div>`
+    $('#tiers').innerHTML = order.map((r, i) => {
+      const gap = r.q.total - lo
+      const isBest = gap < 0.005
+      const width = hi > 0 ? Math.max(6, (r.q.total / hi) * 100) : 100
+      return `<li class="${isBest ? 'best' : ''}">
+        <span class="t-rank">${i + 1}</span><span class="t-name">${esc(label(r.f))}</span><span class="t-total">${fmt(r.q.total, true)}</span>
+        <span></span><span class="t-bar"><i style="width:${width}%"></i></span><span class="t-gap">${isBest ? 'Cheapest' : '+' + fmt(gap)}</span>
+      </li>`
+    }).join('')
+    $('#spread').innerHTML = order.length > 1
+      ? `<span>Cheapest to dearest</span><b>${fmt(hi - lo, true)}</b>`
+      : '<span>Add another law firm to compare</span>'
+  }
+
+  // ── Disbursements: tabs, scope, rows ────────────────────────────────────
+  const tabsEl = $('#tabs')
+  const scopeEl = $('#scope')
+  const rowsEl = $('#rows')
+  let rowRefs = {}
+  function editing() {
+    if (S.tab === 'all') return { prices: S.shared, locked: false }
+    const f = S.firms.find((x) => x.id === S.tab)
+    if (!f) { S.tab = 'all'; return { prices: S.shared, locked: false } }
+    return f.items ? { prices: f.items, locked: false, firm: f } : { prices: S.shared, locked: true, firm: f }
+  }
+  function renderTabs() {
+    tabsEl.replaceChildren()
+    const mk = (id, text, own) => {
+      const b = h('button', { class: 'tab' + (S.tab === id ? ' on' : ''), role: 'tab', 'aria-selected': S.tab === id }, esc(text) + (own ? '<span class="own">Own prices</span>' : ''))
+      b.addEventListener('click', () => { S.tab = id; renderTabs(); renderScope(); renderRows() })
+      tabsEl.append(b)
+    }
+    mk('all', 'All law firms', false)
+    S.firms.forEach((f) => mk(f.id, label(f), !!f.items))
+  }
+  function renderScope() {
+    const e = editing()
+    if (!e.firm) {
+      const own = S.firms.filter((f) => f.items)
+      scopeEl.innerHTML = own.length
+        ? `<span>These prices apply to every law firm except ${own.map((f) => '<b>' + esc(label(f)) + '</b>').join(', ')}, which ${own.length > 1 ? 'have their' : 'has its'} own.</span>`
+        : '<span>These prices apply to every law firm.</span>'
+      return
+    }
+    const f = e.firm
+    scopeEl.innerHTML = `<span>${f.items ? `<b>${esc(label(f))}</b> uses its own prices.` : `<b>${esc(label(f))}</b> uses the prices for all law firms.`}</span>
+      <label class="switch"><input type="checkbox" ${f.items ? 'checked' : ''}> Own prices for ${esc(label(f))}</label>`
+    $('input', scopeEl).addEventListener('change', (ev) => {
+      f.items = ev.target.checked ? { ...S.shared } : null
+      renderTabs(); renderScope(); renderRows(); update()
+    })
+  }
+  function renderPicks() {
+    const side = type().side
+    const n = ITEMS.filter((it) => picked(it, side)).length
+    const standard = ITEMS.every((it) => picked(it, side) === !!it.qty[side])
+    const word = side === 'S' ? 'sale' : 'purchase'
+    $('#picks').innerHTML = `<span><b>${n} of ${ITEMS.length}</b> disbursements on a ${word} quote, for every law firm.</span>${standard ? '' : '<button class="link" id="pickReset">Back to the standard list</button>'}`
+    const reset = $('#pickReset')
+    if (reset) reset.addEventListener('click', () => { S.pick[side] = standardPicks(side); renderRows(); update() })
+  }
+  function renderRows() {
+    const e = editing()
+    const side = type().side
+    rowsEl.replaceChildren()
+    rowRefs = {}
+    ITEMS.forEach((it) => {
+      const on = picked(it, side)
+      const tr = h('tr', { class: on ? '' : 'off' })
+      const rule = it.qty[side] || it.qty.P || it.qty.S
+      const note = rule === 'clients' ? '<small>× clients</small>' : rule === 'units' ? '<small class="docs">× <input class="docs-in" inputmode="numeric" aria-label="Number of documents"> documents</small>' : ''
+      const box = `<td class="pick"><input type="checkbox" ${on ? 'checked' : ''} aria-label="Add ${it.name} to the quote"></td>`
+      const price = it.hmlr
+        ? '<td><span class="fixed">Pass-through</span></td>'
+        : `<td class="price"><span class="money-in"><span>£</span><input class="p-in" inputmode="decimal" aria-label="${it.name} price" ${e.locked || !on ? 'disabled' : ''}></span></td>`
+      tr.innerHTML = `${box}<td class="name">${it.name}${note}</td><td class="r">${fmt(it.min)}</td>${price}<td class="unit muted">${it.unit}</td>`
+      $('.pick input', tr).addEventListener('change', (ev) => {
+        S.pick[side][it.key] = ev.target.checked
+        renderRows()
+        update()
+      })
+      const docs = $('.docs-in', tr)
+      if (docs) {
+        docs.value = S.c.docs
+        docs.addEventListener('input', () => { const v = parse(docs.value); if (Number.isFinite(v)) { S.c.docs = Math.min(50, Math.round(v)); update() } })
+        docs.addEventListener('blur', () => { docs.value = S.c.docs })
+      }
+      const input = $('.p-in', tr)
+      if (input) {
+        input.value = e.prices[it.key]
+        input.addEventListener('input', () => {
+          const val = parse(input.value)
+          if (!Number.isFinite(val)) return
+          e.prices[it.key] = Math.max(it.min, val)
+          update()
+        })
+        input.addEventListener('blur', () => { input.value = e.prices[it.key] })
+      }
+      rowsEl.append(tr)
+    })
+    renderPicks()
+  }
+
+  // ── Update ──────────────────────────────────────────────────────────────
+  let first = true
+  function update() {
+    const results = S.firms.map((f) => ({ f, q: quote(f) }))
+    const sorted = [...results].sort((a, b) => a.q.total - b.q.total)
+    const lo = sorted[0].q.total
+    const n = results.length
+
+    results.forEach(({ f, q }) => {
+      const r = firmRefs.get(f.id)
+      if (!r) return
+      tween(r.total, q.total, bigMoney, first ? 900 : 600)
+      const rank = sorted.findIndex((x) => x.f === f) + 1
+      const tie = sorted.filter((x) => Math.abs(x.q.total - q.total) < 0.005).length > 1
+      const cheapest = Math.abs(q.total - lo) < 0.005
+      r.chip.textContent = n === 1 ? 'Only firm' : cheapest ? (tie ? 'Joint cheapest' : 'Cheapest') : rank === n ? 'Dearest' : `${ordinal(rank)} of ${n}`
+      r.chip.className = 'chip' + (cheapest && n > 1 ? ' best' : '')
+      r.gap.textContent = n > 1 && !cheapest ? `+${fmt(q.total - lo)} vs cheapest` : ''
+      r.el.classList.toggle('cheapest', cheapest && n > 1 && !tie)
+      tween(r.legal, q.legalFee, (v) => fmt(v, true))
+      r.refRow.forEach((x) => x.classList.toggle('hide', q.referral < 0.005))
+      tween(r.ref, q.referral, (v) => fmt(v, true))
+      r.lhRow.forEach((x) => x.classList.toggle('hide', q.lease < 0.005))
+      tween(r.lh, q.lease, (v) => fmt(v, true))
+      r.aoRow.forEach((x) => x.classList.toggle('hide', q.owners < 0.005))
+      r.aol.textContent = `Additional owners × ${q.ownersQty}`
+      tween(r.ao, q.owners, (v) => fmt(v, true))
+      tween(r.disb, q.disb, (v) => fmt(v, true))
+      r.prices.textContent = f.items ? 'Own prices' : 'Shared prices'
+      const sig = q.total.toFixed(2)
+      r.last = sig
+    })
+    renderLadder(results)
+    if (drawerFirm) renderDrawer(drawerFirm)
+    first = false
+    save()
+  }
+
+  // ── Breakdown drawer ────────────────────────────────────────────────────
+  let drawerFirm = null
+  const drawer = $('#drawer')
+  const scrim = $('#scrim')
+  function openDrawer(f) {
+    drawerFirm = f
+    renderDrawer(f, true)
+    drawer.classList.add('open'); scrim.classList.add('open')
+    drawer.setAttribute('aria-hidden', 'false')
+    setTimeout(() => $('#dClose').focus(), 50)
+  }
+  function closeDrawer() {
+    drawer.classList.remove('open'); scrim.classList.remove('open')
+    drawer.setAttribute('aria-hidden', 'true')
+    drawerFirm = null
+  }
+  $('#dClose').addEventListener('click', closeDrawer)
+  scrim.addEventListener('click', closeDrawer)
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && drawerFirm) closeDrawer() })
+
+  function renderDrawer(f, animate = false) {
+    if (!S.firms.includes(f)) return closeDrawer()
+    const q = quote(f)
+    $('#dTitle').textContent = label(f)
+    $('#dSub').textContent = `${type().name} · ${S.c.clients} client${S.c.clients > 1 ? 's' : ''} · ${S.c.inc ? 'inc' : 'ex'} VAT`
+    let i = 0
+    const anim = () => (animate ? `animation-delay:${i++ * 15}ms` : 'animation:none')
+    const row = (name, v, cls = '') => `<tr class="${cls}" style="${anim()}"><td>${name}</td><td class="num">${fmt(v, true)}</td></tr>`
+    let html = '<h3>Summary</h3><table class="btable"><tbody>'
+    html += row('Legal fee', q.fee.legal)
+    html += row('Referral fee', referralFor(f))
+    if (q.net.additional > 0.005) html += row('Additional work', q.net.additional)
+    html += row('Disbursements', q.net.disb)
+    if (S.c.inc) html += row('VAT', q.net.vat)
+    html += row('Client pays', q.total, 'tot')
+    html += '</tbody></table><h3>Every line</h3><table class="btable"><tbody>'
+    const titles = { legal: 'Legal fee', additional: 'Additional work', disb: 'Disbursements' }
+    let group = null
+    q.lines.forEach((l) => {
+      if (l.group !== group) { html += `<tr class="grp" style="animation:none"><td colspan="2">${titles[l.group]}</td></tr>`; group = l.group }
+      html += row(l.name + (l.qty > 1 ? ` × ${l.qty}` : ''), q.val(l))
+    })
+    html += row('Client pays', q.total, 'tot')
+    html += '</tbody></table>'
+    $('#dBody').innerHTML = html
+  }
+
+  // ── Top actions ─────────────────────────────────────────────────────────
+  $('#reset').addEventListener('click', () => {
+    S = fresh()
+    history.replaceState(null, '', location.pathname + location.search)
+    renderAll(); toast('Started again')
+  })
+  $('#share').addEventListener('click', async () => {
+    const hash = btoa(unescape(encodeURIComponent(JSON.stringify(S))))
+    history.replaceState(null, '', '#' + hash)
+    try { await navigator.clipboard.writeText(location.href); toast('Link copied') } catch { toast('The link is in the address bar') }
+  })
+
+  // ── Go ──────────────────────────────────────────────────────────────────
+  function renderAll() {
+    typeSel.value = S.c.type
+    $('#clients').textContent = S.c.clients
+    $('#refAllIn').value = S.ref.all
+    placeVat()
+    placeRef()
+    renderFirms()
+    renderTabs()
+    renderScope()
+    renderRows()
+    update()
+  }
+  requestAnimationFrame(renderAll)
+  window.addEventListener('resize', () => { placeVat(); placeRef() })
+  if (document.fonts) document.fonts.ready.then(() => { placeVat(); placeRef() })
+})()
+</script>
+</body>
+</html>
